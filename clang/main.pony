@@ -7,17 +7,18 @@ actor Main
       let file: File = OpenFile(filepath) as File
       let code: String = String.from_array(file.read(file.size()))
       try
-        let tokenized_code: Array[Token] = Lexer(code)?
-        var tokenized_code_string: String iso = recover String end
-        for i in tokenized_code.values() do
-          tokenized_code_string.append(i.string() + " ")
+        let tokenized_code: Array[LexerToken] val = Lexer(code)?
+        try
+          let production_rules: ParserProgram = Parser(tokenized_code)?
+        else
+          env.err.print("Error: Parser failed.")
+          env.exitcode(2)
         end
-        env.out.print(consume tokenized_code_string)
       else
-        env.out.print("Error: Lexer failed.")
+        env.err.print("Error: Lexer failed.")
         env.exitcode(1)
       end
     else
-      env.out.print("Error: Couldn't open file.")
-        env.exitcode(-1)
+      env.err.print("Error: Couldn't open file.")
+      env.exitcode(-1)
     end
