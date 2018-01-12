@@ -2,6 +2,7 @@ use "files"
 
 actor Main
   let env: Env
+  let help: Bool
   let lexer: Bool
   let parser: Bool
   let assembly: Bool
@@ -10,13 +11,16 @@ actor Main
 
   new create(env': Env) =>
     env = env'
-    lexer = env.args.contains("-l" where predicate = {(l, r) => l == r})
-    parser = env.args.contains("-p"  where predicate = {(l, r) => l == r})
-    assembly = env.args.contains("-s"  where predicate = {(l, r) => l == r})
-    if parser and lexer then
+    let predicate' = {(l: box->String!, r: box->String!): Bool => l == r }
+    help = env.args.contains("-h" where predicate = predicate')
+      or env.args.contains("--help" where predicate = predicate')
+    lexer = env.args.contains("-l" where predicate = predicate')
+    parser = env.args.contains("-p"  where predicate = predicate')
+    assembly = env.args.contains("-s"  where predicate = predicate')
+    if not(help) and (parser and lexer) then
       env.out.print("(Warning: Parser won't be run)")
     end
-    if assembly and (parser or lexer) then
+    if not(help) and (assembly and (parser or lexer)) then
       env.out.print("(Warning: Generator won't be run)")
     end
     filepath =
@@ -33,12 +37,28 @@ actor Main
       else
         ""
       end
-    if filepath.size() > 0 then
+    if help then
+      print_help()
+    elseif filepath.size() > 0 then
       load_source_file()
     else
-      env.err.print("Error: No '.c' file provided.")
+      env.err.print(
+        "Error: No '.c' file provided. Try '" +
+        try env.args(0)? else "clang-pony" end +
+        " -h' for help.")
       env.exitcode(1)
     end
+
+  fun ref print_help() =>
+    env.out.print(
+      "OVERVIEW: clang-pony - A simple C compiler written in Pony\n\n" +
+      "USAGE: " + try env.args(0)? else "clang-pony" end +
+      " [-h | --help] | [options] <file.c>\n\n" +
+      "OPTIONS:\n" +
+      "  -h, --help\tPrint this message.\n" +
+      "  -l\t\tShow the generated lexer tokens.\n" +
+      "  -p\t\tShow the generated AST.\n" +
+      "  -s\t\tGenerate an assembly file instead of compiling.")
 
   fun ref load_source_file() =>
     try
@@ -101,9 +121,12 @@ actor Main
     let command: String = "gcc -m32 " + assembly_file + " -o " + output_filepath
     try
       let auth: AmbientAuth = env.root as AmbientAuth
-      Shell(command)?
-      FilePath(auth, assembly_file)?.remove()
-    else
-      env.err.print("Error: Couldn't assemble executable.")
-      env.exitcode(6)
+      try
+        Shell(command)?
+      else
+        env.err.print("Error: Couldn't assemble executable.")
+        env.exitcode(6)
+      then
+        FilePath(auth, assembly_file)?.remove()
+      end
     end

@@ -1,5 +1,3 @@
-use "debug"
-
 class val ParserProgram
   let function: ParserFunction
 
