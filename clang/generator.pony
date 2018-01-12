@@ -5,8 +5,8 @@ primitive Generator
 
   fun generate_function(function: ParserFunction): String =>
     let statement = generate_statement(function.statement)
-    "\t.globl " + function.id + "\n" +
-    function.id + ":\n" +
+    "\t.globl _" + function.id + "\n" +
+    "_" + function.id + ":\n" +
     statement
 
   fun generate_statement(statement: ParserStatement): String =>
