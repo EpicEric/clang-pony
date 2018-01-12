@@ -27,8 +27,26 @@ class val ParserConst
   new val create(int': USize) =>
     int = int'
 
+primitive ParserNegation
+primitive ParserBitwiseComplement
+primitive ParserLogicalNegation
+
+type ParserUnaryOperator is
+  ( ParserNegation
+  | ParserBitwiseComplement
+  | ParserLogicalNegation )
+
+class val ParserUnaryOP
+  let op: ParserUnaryOperator
+  let exp: ParserExp
+
+  new val create(op': ParserUnaryOperator, exp': ParserExp) =>
+    op = op'
+    exp = exp'
+
 type ParserExp is
-  ( ParserConst )
+  ( ParserConst
+  | ParserUnaryOP )
 
 class val ParserID
   let id: String
@@ -120,7 +138,7 @@ primitive Parser
     : ( ParserExp, Array[LexerToken] val ) ?
   =>
     """
-    <exp> ::= INTEGER
+    <exp> ::= <unary_op> <exp> | INTEGER
     """
     var curr_array = token_array
     match curr_array(0)?
@@ -128,6 +146,34 @@ primitive Parser
       curr_array = curr_array.trim(1)
       let exp = ParserConst(a.value)
       return (exp, curr_array)
+    | let a: LexerUnaryOP =>
+      (let unary_op, curr_array) = parse_unary_op(curr_array)?
+      (let exp_in, curr_array) = parse_exp(curr_array)?
+      let exp = ParserUnaryOP(unary_op, exp_in)
+      return (exp, curr_array)
+    end
+    error
+
+  fun parse_unary_op(token_array: Array[LexerToken] val)
+    : ( ParserUnaryOperator, Array[LexerToken] val ) ?
+  =>
+    """
+    <unary_op> ::= "!" | "~" | "-"
+    """
+    var curr_array = token_array
+    match curr_array(0)?
+    | let a: LexerNegation =>
+      curr_array = curr_array.trim(1)
+      let op = ParserNegation
+      return (op, curr_array)
+    | let a: LexerBitwiseComplement =>
+      curr_array = curr_array.trim(1)
+      let op = ParserBitwiseComplement
+      return (op, curr_array)
+    | let a: LexerLogicalNegation =>
+      curr_array = curr_array.trim(1)
+      let op = ParserLogicalNegation
+      return (op, curr_array)
     end
     error
 

@@ -18,6 +18,23 @@ primitive LexerSemicolon
   fun string(): String =>
     "SEMICOLON"
 
+primitive LexerNegation
+  fun string(): String =>
+    "NEGATION"
+
+primitive LexerBitwiseComplement
+  fun string(): String =>
+    "BITWISE_COMPLEMENT"
+
+primitive LexerLogicalNegation
+  fun string(): String =>
+    "LOGICAL_NEGATION"
+
+type LexerUnaryOP is
+  ( LexerNegation
+  | LexerBitwiseComplement
+  | LexerLogicalNegation )
+
 primitive LexerReturnKeyword
   fun string(): String =>
     "RETURN_KEYWORD"
@@ -52,6 +69,7 @@ type LexerToken is
   | LexerOpenParenthesis
   | LexerCloseParenthesis
   | LexerSemicolon
+  | LexerUnaryOP
   | LexerKeyword
   | LexerIdentifier
   | LexerIntegerLiteral )
@@ -101,6 +119,18 @@ primitive Lexer
           let token = finalise_token(current_token_value = recover String end)?
           try token_array.push(token as LexerToken) end
           token_array.push(LexerSemicolon)
+        | '-' =>
+          let token = finalise_token(current_token_value = recover String end)?
+          try token_array.push(token as LexerToken) end
+          token_array.push(LexerNegation)
+        | '~' =>
+          let token = finalise_token(current_token_value = recover String end)?
+          try token_array.push(token as LexerToken) end
+          token_array.push(LexerBitwiseComplement)
+        | '!' =>
+          let token = finalise_token(current_token_value = recover String end)?
+          try token_array.push(token as LexerToken) end
+          token_array.push(LexerLogicalNegation)
         else
           current_token_value.push(char)
         end
