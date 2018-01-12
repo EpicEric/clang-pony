@@ -71,7 +71,7 @@ actor Main
     try
       let production_rules: ParserProgram = Parser(tokens)?
       if parser then
-        env.out.print("TODO -- Build AST")
+        env.out.print(Parser.print_ast(production_rules))
       else
         generate_code(production_rules)
       end

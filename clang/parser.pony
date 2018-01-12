@@ -1,3 +1,5 @@
+use "debug"
+
 class val ParserProgram
   let function: ParserFunction
 
@@ -59,6 +61,7 @@ type ParserRule is
   | ParserFunction
   | ParserStatement
   | ParserExp
+  | ParserUnaryOperator
   | ParserID )
 
 primitive Parser
@@ -69,6 +72,48 @@ primitive Parser
     (let program, curr_array) = parse_program(curr_array)?
     if curr_array.size() > 0 then error end
     program
+
+  fun print_ast(rule: ParserRule, level: USize = 0) : String =>
+    match rule
+    | let r: ParserProgram =>
+      print_level(level) + "PROGRAM\n" +
+      print_ast(r.function, level + 1)
+    | let r: ParserFunction =>
+      print_level(level) + "FUNCTION " + r.id + "\n" +
+      print_ast(r.statement, level + 1)
+    | let r: ParserReturn =>
+      print_level(level) + "RETURN\n" +
+      print_ast(r.exp, level + 1)
+    | let r: ParserConst =>
+      print_level(level) + "CONST " + r.int.string() + "\n"
+    | let r: ParserNegation =>
+      print_level(level) + "NEGATION\n"
+    | let r: ParserBitwiseComplement =>
+      print_level(level) + "BITWISE_COMPLEMENT\n"
+    | let r: ParserLogicalNegation =>
+      print_level(level) + "LOGICAL_NEGATION\n"
+    | let r: ParserUnaryOP =>
+      print_level(level) + "UNARY_OP\n" +
+      print_ast(r.op, level + 1) +
+      print_ast(r.exp, level + 1)
+    | let r: ParserID =>
+      print_level(level) + "ID " + r.id + "\n"
+    // else
+    //   print_level(level) + "UNKNOWN\n"
+    end
+
+  fun print_level(level: USize): String iso^ =>
+    if level == 0 then
+      return recover String end
+    end
+    let string: String iso = recover String(level * 2) end
+    var i: USize = 0
+    while i < (level - 1) do
+      string.append("--")
+      i = i + 1
+    end
+    if level > 0 then string.append("- ") end
+    consume string
 
   fun parse_program(token_array: Array[LexerToken] val)
     : ( ParserProgram, Array[LexerToken] val ) ?
