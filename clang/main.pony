@@ -1,64 +1,65 @@
+use "cli"
 use "files"
 
 actor Main
   let env: Env
-  let help: Bool
-  let lexer: Bool
-  let parser: Bool
-  let assembly: Bool
-  let filepath: String
-  let output_filepath: String
+  var lexer: Bool = false
+  var parser: Bool = false
+  var assembly: Bool = false
+  var filepath: String = ""
+  var output_filepath: String = ""
 
   new create(env': Env) =>
     env = env'
-    let predicate' = {(l: box->String!, r: box->String!): Bool => l == r }
-    help = env.args.contains("-h" where predicate = predicate')
-      or env.args.contains("--help" where predicate = predicate')
-    lexer = env.args.contains("-l" where predicate = predicate')
-    parser = env.args.contains("-p"  where predicate = predicate')
-    assembly = env.args.contains("-s"  where predicate = predicate')
-    if not(help) and (parser and lexer) then
+    let cs =
+      try
+        CommandSpec.leaf("clang", "A simple C compiler written in Pony", [
+          OptionSpec.bool("lexer",
+            "Show the generated lexer tokens."
+            where short' = 'l', default' = false)
+          OptionSpec.bool("parser",
+            "Show the generated AST."
+            where short' = 'p', default' = false)
+          OptionSpec.bool("assemble",
+            "Generate an assembly file instead of compiling."
+            where short' = 's', default' = false)
+        ], [
+          ArgSpec.string("file", "A '.c' file to assemble.")
+        ])? .> add_help()?
+      else
+        env.exitcode(-1)
+        return
+      end
+    let cmd =
+      match CommandParser(cs).parse(env.args, env.vars())
+      | let c: Command => c
+      | let ch: CommandHelp =>
+          ch.print_help(env.out)
+          env.exitcode(0)
+          return
+      | let se: SyntaxError =>
+          env.out.print(se.string())
+          env.exitcode(-1)
+          return
+      end
+    lexer = cmd.option("lexer").bool()
+    parser = cmd.option("parser").bool()
+    assembly = cmd.option("assemble").bool()
+    if parser and lexer then
       env.out.print("(Warning: Parser won't be run)")
     end
-    if not(help) and (assembly and (parser or lexer)) then
+    if assembly and (parser or lexer) then
       env.out.print("(Warning: Generator won't be run)")
     end
-    filepath =
-      try
-        env.args(env.args.find(
-          ".c" where predicate = {(l, r) => l.trim(l.size() - 2) == r}
-        )?)?
-      else
-        ""
-      end
-    output_filepath =
-      if filepath.size() > 0 then
-        filepath.trim(0, filepath.size() - 2)
-      else
-        ""
-      end
-    if help then
-      print_help()
-    elseif filepath.size() > 0 then
-      load_source_file()
-    else
+    filepath = cmd.arg("file").string()
+    if filepath.trim(filepath.size() - 2) != ".c" then
       env.err.print(
-        "Error: No '.c' file provided. Try '" +
-        try env.args(0)? else "clang-pony" end +
-        " -h' for help.")
+        "Error: Provided file is not a '.c' file.")
       env.exitcode(1)
+    else
+      output_filepath = filepath.trim(0, filepath.size() - 2)
+      load_source_file()
     end
-
-  fun ref print_help() =>
-    env.out.print(
-      "OVERVIEW: clang-pony - A simple C compiler written in Pony\n\n" +
-      "USAGE: " + try env.args(0)? else "clang-pony" end +
-      " [-h | --help] | [options] <file.c>\n\n" +
-      "OPTIONS:\n" +
-      "  -h, --help\tPrint this message.\n" +
-      "  -l\t\tShow the generated lexer tokens.\n" +
-      "  -p\t\tShow the generated AST.\n" +
-      "  -s\t\tGenerate an assembly file instead of compiling.")
 
   fun ref load_source_file() =>
     try
