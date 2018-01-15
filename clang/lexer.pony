@@ -47,11 +47,51 @@ primitive LexerDivision
   fun string(): String =>
     "DIVISION"
 
+primitive LexerLogicalAnd
+  fun string(): String =>
+    "LOGICAL_AND"
+
+primitive LexerLogicalOr
+  fun string(): String =>
+    "LOGICAL_OR"
+
+primitive LexerEqualTo
+  fun string(): String =>
+    "EQUAL_TO"
+
+primitive LexerNotEqualTo
+  fun string(): String =>
+    "NOT_EQUAL_TO"
+
+primitive LexerLessThan
+  fun string(): String =>
+    "LESS_THAN"
+
+primitive LexerLessThanOrEqualTo
+  fun string(): String =>
+    "LESS_THAN_OR_EQUAL_TO"
+
+primitive LexerGreaterThan
+  fun string(): String =>
+    "GREATER_THAN"
+
+primitive LexerGreaterThanOrEqualTo
+  fun string(): String =>
+    "GREATER_THAN_OR_EQUAL_TO"
+
 type LexerBinaryOP is
   ( LexerAddition
   | LexerNegation
   | LexerMultiplication
-  | LexerDivision )
+  | LexerDivision
+  | LexerLogicalAnd
+  | LexerLogicalOr
+  | LexerEqualTo
+  | LexerNotEqualTo
+  | LexerLessThan
+  | LexerLessThanOrEqualTo
+  | LexerGreaterThan
+  | LexerGreaterThanOrEqualTo )
 
 primitive LexerReturnKeyword
   fun string(): String =>
@@ -149,7 +189,7 @@ primitive Lexer
         | '!' =>
           let token = finalise_token(current_token_value = recover String end)?
           try token_array.push(token as LexerToken) end
-          token_array.push(LexerLogicalNegation)
+          current_token_value.push(char)
         | '+' =>
           let token = finalise_token(current_token_value = recover String end)?
           try token_array.push(token as LexerToken) end
@@ -162,7 +202,42 @@ primitive Lexer
           let token = finalise_token(current_token_value = recover String end)?
           try token_array.push(token as LexerToken) end
           token_array.push(LexerDivision)
+        | '&' =>
+          if current_token_value != "&" then
+            let token = finalise_token(current_token_value = recover String end)?
+            try token_array.push(token as LexerToken) end
+          end
+          current_token_value.push(char)
+        | '|' =>
+          if current_token_value != "|" then
+            let token = finalise_token(current_token_value = recover String end)?
+            try token_array.push(token as LexerToken) end
+          end
+          current_token_value.push(char)
+        | '=' =>
+          if (current_token_value != "=") and (current_token_value != "!") and
+            (current_token_value != "<") and (current_token_value != ">") then
+            let token = finalise_token(current_token_value = recover String end)?
+            try token_array.push(token as LexerToken) end
+          end
+          current_token_value.push(char)
+        | '<' =>
+          if current_token_value != "" then
+            let token = finalise_token(current_token_value = recover String end)?
+            try token_array.push(token as LexerToken) end
+          end
+          current_token_value.push(char)
+        | '>' =>
+          if current_token_value != "" then
+            let token = finalise_token(current_token_value = recover String end)?
+            try token_array.push(token as LexerToken) end
+          end
+          current_token_value.push(char)
         else
+          if current_token_value == "!" then
+            let token = finalise_token(current_token_value = recover String end)?
+            try token_array.push(token as LexerToken) end
+          end
           current_token_value.push(char)
         end
       end
@@ -178,6 +253,24 @@ primitive Lexer
         return LexerReturnKeyword
       | "int" =>
         return LexerIntKeyword
+      | "!" =>
+        return LexerLogicalNegation
+      | "&&" =>
+        return LexerLogicalAnd
+      | "||" =>
+        return LexerLogicalOr
+      | "==" =>
+        return LexerEqualTo
+      | "!=" =>
+        return LexerNotEqualTo
+      | "<" =>
+        return LexerLessThan
+      | "<=" =>
+        return LexerLessThanOrEqualTo
+      | ">" =>
+        return LexerGreaterThan
+      | ">=" =>
+        return LexerGreaterThanOrEqualTo
       else
         let first_char: U8 = current_token_value(0)?
         let alphabet_char: Bool =

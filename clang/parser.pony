@@ -21,29 +21,129 @@ class val ParserReturn
 type ParserStatement is
   ( ParserReturn )
 
-primitive ParserAddition
-primitive ParserSubtraction
+primitive ParserLogicalOr
 
 type ParserExpBinaryOperator is
-  ( ParserAddition
-  | ParserSubtraction )
+  ( ParserLogicalOr )
 
 class val ParserExpBinaryOP
   let op: ParserExpBinaryOperator
-  let term1: (ParserTerm | ParserExpBinaryOP)
-  let term2: ParserTerm
+  let exp1: ParserExp
+  let exp2: ParserLogicalAndExp
 
   new val create(
     op': ParserExpBinaryOperator,
-    term1': (ParserTerm | ParserExpBinaryOP),
+    exp1': ParserExp,
+    exp2': ParserLogicalAndExp)
+  =>
+    op = op'
+    exp1 = exp1'
+    exp2 = exp2'
+
+type ParserExp is
+  ( ParserExpBinaryOP
+  | ParserLogicalAndExp )
+
+primitive ParserLogicalAnd
+
+type ParserLogicalAndExpBinaryOperator is
+  ( ParserLogicalAnd )
+
+class val ParserLogicalAndExpBinaryOP
+  let op: ParserLogicalAndExpBinaryOperator
+  let exp1: ParserLogicalAndExp
+  let exp2: ParserEqualityExp
+
+  new val create(
+    op': ParserLogicalAndExpBinaryOperator,
+    exp1': ParserLogicalAndExp,
+    exp2': ParserEqualityExp)
+  =>
+    op = op'
+    exp1 = exp1'
+    exp2 = exp2'
+
+type ParserLogicalAndExp is
+  ( ParserLogicalAndExpBinaryOP
+  | ParserEqualityExp )
+
+primitive ParserEqualTo
+primitive ParserNotEqualTo
+
+type ParserEqualityExpBinaryOperator is
+  ( ParserEqualTo
+  | ParserNotEqualTo )
+
+class val ParserEqualityExpBinaryOP
+  let op: ParserEqualityExpBinaryOperator
+  let exp1: ParserEqualityExp
+  let exp2: ParserRelationalExp
+
+  new val create(
+    op': ParserEqualityExpBinaryOperator,
+    exp1': ParserEqualityExp,
+    exp2': ParserRelationalExp)
+  =>
+    op = op'
+    exp1 = exp1'
+    exp2 = exp2'
+
+type ParserEqualityExp is
+  ( ParserEqualityExpBinaryOP
+  | ParserRelationalExp )
+
+primitive ParserLessThan
+primitive ParserLessThanOrEqualTo
+primitive ParserGreaterThan
+primitive ParserGreaterThanOrEqualTo
+
+type ParserRelationalExpBinaryOperator is
+  ( ParserLessThan
+  | ParserLessThanOrEqualTo
+  | ParserGreaterThan
+  | ParserGreaterThanOrEqualTo )
+
+class val ParserRelationalExpBinaryOP
+  let op: ParserRelationalExpBinaryOperator
+  let exp1: ParserRelationalExp
+  let exp2: ParserAdditiveExp
+
+  new val create(
+    op': ParserRelationalExpBinaryOperator,
+    exp1': ParserRelationalExp,
+    exp2': ParserAdditiveExp)
+  =>
+    op = op'
+    exp1 = exp1'
+    exp2 = exp2'
+
+type ParserRelationalExp is
+  ( ParserRelationalExpBinaryOP
+  | ParserAdditiveExp )
+
+primitive ParserAddition
+primitive ParserSubtraction
+
+type ParserAdditiveExpBinaryOperator is
+  ( ParserAddition
+  | ParserSubtraction )
+
+class val ParserAdditiveExpBinaryOP
+  let op: ParserAdditiveExpBinaryOperator
+  let term1: ParserAdditiveExp
+  let term2: ParserTerm
+
+  new val create(
+    op': ParserAdditiveExpBinaryOperator,
+    term1': ParserAdditiveExp,
     term2': ParserTerm)
   =>
     op = op'
     term1 = term1'
     term2 = term2'
 
-type ParserExp is
-  ( ParserExpBinaryOP
+type ParserAdditiveExp is
+  ( ParserAdditiveExpBinaryOP
   | ParserTerm )
 
 primitive ParserMultiplication
@@ -73,6 +173,10 @@ type ParserTerm is
 
 type ParserBinaryOperator is
   ( ParserExpBinaryOperator
+  | ParserLogicalAndExpBinaryOperator
+  | ParserEqualityExpBinaryOperator
+  | ParserRelationalExpBinaryOperator
+  | ParserAdditiveExpBinaryOperator
   | ParserTermBinaryOperator )
 
 class val ParserConst
@@ -120,6 +224,10 @@ type ParserRule is
   | ParserFunction
   | ParserStatement
   | ParserExp
+  | ParserLogicalAndExp
+  | ParserEqualityExp
+  | ParserRelationalExp
+  | ParserAdditiveExp
   | ParserTerm
   | ParserFactor
   | ParserBinaryOperator
@@ -146,19 +254,55 @@ primitive Parser
     | let r: ParserReturn =>
       print_level(level) + "RETURN\n" +
       print_ast(r.exp, level + 1)
+    | let r: ParserExpBinaryOP =>
+      print_level(level) + "EXP_BINARY_OP\n" +
+      print_ast(r.op, level + 1) +
+      print_ast(r.exp1, level + 1) +
+      print_ast(r.exp2, level + 1)
+    | let r: ParserLogicalAndExpBinaryOP =>
+      print_level(level) + "LOGICAL_AND_EXP_BINARY_OP\n" +
+      print_ast(r.op, level + 1) +
+      print_ast(r.exp1, level + 1) +
+      print_ast(r.exp2, level + 1)
+    | let r: ParserEqualityExpBinaryOP =>
+      print_level(level) + "EQUALITY_EXP_BINARY_OP\n" +
+      print_ast(r.op, level + 1) +
+      print_ast(r.exp1, level + 1) +
+      print_ast(r.exp2, level + 1)
+    | let r: ParserRelationalExpBinaryOP =>
+      print_level(level) + "RELATIONAL_EXP_BINARY_OP\n" +
+      print_ast(r.op, level + 1) +
+      print_ast(r.exp1, level + 1) +
+      print_ast(r.exp2, level + 1)
+    | let r: ParserAdditiveExpBinaryOP =>
+      print_level(level) + "ADDITIVE_EXP_BINARY_OP\n" +
+      print_ast(r.op, level + 1) +
+      print_ast(r.term1, level + 1) +
+      print_ast(r.term2, level + 1)
     | let r: ParserAddition =>
       print_level(level) + "ADDITION\n"
     | let r: ParserSubtraction =>
       print_level(level) + "SUBTRACTION\n"
-    | let r: ParserExpBinaryOP =>
-      print_level(level) + "EXP_BINARY_OP\n" +
-      print_ast(r.op, level + 1) +
-      print_ast(r.term1, level + 1) +
-      print_ast(r.term2, level + 1)
     | let r: ParserMultiplication =>
       print_level(level) + "MULTIPLICATION\n"
     | let r: ParserDivision =>
       print_level(level) + "DIVISION\n"
+    | let r: ParserLogicalAnd =>
+      print_level(level) + "LOGICAL_AND\n"
+    | let r: ParserLogicalOr =>
+      print_level(level) + "LOGICAL_OR\n"
+    | let r: ParserEqualTo =>
+      print_level(level) + "EQUAL_TO\n"
+    | let r: ParserNotEqualTo =>
+      print_level(level) + "NOT_EQUAL_TO\n"
+    | let r: ParserLessThan =>
+      print_level(level) + "LESS_THAN\n"
+    | let r: ParserLessThanOrEqualTo =>
+      print_level(level) + "LESS_THAN_OR_EQUAL_TO\n"
+    | let r: ParserGreaterThan =>
+      print_level(level) + "GREATER_THAN\n"
+    | let r: ParserGreaterThanOrEqualTo =>
+      print_level(level) + "GREATER_THAN_OR_EQUAL_TO\n"
     | let r: ParserTermBinaryOP =>
       print_level(level) + "TERM_BINARY_OP\n" +
       print_ast(r.op, level + 1) +
@@ -265,20 +409,116 @@ primitive Parser
     : ( ParserExp, Array[LexerToken] val ) ?
   =>
     """
-    <exp> ::= <term> { ("+" | "-") <term> }
+    <exp> ::= <logical-and-exp> { "||" <logical-and-exp> }
     """
     var curr_array = token_array
-    (var exp: ParserExp, curr_array) = parse_term(curr_array)?
+    (var exp: ParserExp, curr_array) = parse_logical_and_exp(curr_array)?
+    while true do
+      match curr_array(0)?
+      | let a: LexerLogicalOr =>
+        curr_array = curr_array.trim(1)
+        (let next_exp, curr_array) = parse_logical_and_exp(curr_array)?
+        exp = ParserExpBinaryOP(ParserLogicalOr, exp, next_exp)
+      else
+        break
+      end
+    end
+    (exp, curr_array)
+
+  fun parse_logical_and_exp(token_array: Array[LexerToken] val)
+    : ( ParserLogicalAndExp, Array[LexerToken] val ) ?
+  =>
+    """
+    <logical-and-exp> ::= <equality-exp> { "&&" <equality-exp> }
+    """
+    var curr_array = token_array
+    (var exp: ParserLogicalAndExp, curr_array) = parse_equality_exp(curr_array)?
+    while true do
+      match curr_array(0)?
+      | let a: LexerLogicalAnd =>
+        curr_array = curr_array.trim(1)
+        (let next_exp, curr_array) = parse_equality_exp(curr_array)?
+        exp = ParserLogicalAndExpBinaryOP(ParserLogicalAnd, exp, next_exp)
+      else
+        break
+      end
+    end
+    (exp, curr_array)
+
+  fun parse_equality_exp(token_array: Array[LexerToken] val)
+    : ( ParserEqualityExp, Array[LexerToken] val ) ?
+  =>
+    """
+    <equality-exp> ::= <relational-exp> { ("!=" | "==") <relational-exp> }
+    """
+    var curr_array = token_array
+    (var exp: ParserEqualityExp, curr_array) = parse_relational_exp(curr_array)?
+    while true do
+      match curr_array(0)?
+      | let a: LexerEqualTo =>
+        curr_array = curr_array.trim(1)
+        (let next_exp, curr_array) = parse_relational_exp(curr_array)?
+        exp = ParserEqualityExpBinaryOP(ParserEqualTo, exp, next_exp)
+      | let a: LexerNotEqualTo =>
+        curr_array = curr_array.trim(1)
+        (let next_exp, curr_array) = parse_relational_exp(curr_array)?
+        exp = ParserEqualityExpBinaryOP(ParserNotEqualTo, exp, next_exp)
+      else
+        break
+      end
+    end
+    (exp, curr_array)
+
+  fun parse_relational_exp(token_array: Array[LexerToken] val)
+    : ( ParserRelationalExp, Array[LexerToken] val ) ?
+  =>
+    """
+    <relational-exp> ::= <additive-exp> { ("<" | ">" | "<=" | ">=") <additive-exp> }
+    """
+    var curr_array = token_array
+    (var exp: ParserRelationalExp, curr_array) = parse_additive_exp(curr_array)?
+    while true do
+      match curr_array(0)?
+      | let a: LexerLessThan =>
+        curr_array = curr_array.trim(1)
+        (let next_exp, curr_array) = parse_additive_exp(curr_array)?
+        exp = ParserRelationalExpBinaryOP(ParserLessThan, exp, next_exp)
+      | let a: LexerLessThanOrEqualTo =>
+        curr_array = curr_array.trim(1)
+        (let next_exp, curr_array) = parse_additive_exp(curr_array)?
+        exp = ParserRelationalExpBinaryOP(ParserLessThanOrEqualTo, exp, next_exp)
+      | let a: LexerGreaterThan =>
+        curr_array = curr_array.trim(1)
+        (let next_exp, curr_array) = parse_additive_exp(curr_array)?
+        exp = ParserRelationalExpBinaryOP(ParserGreaterThan, exp, next_exp)
+      | let a: LexerGreaterThanOrEqualTo =>
+        curr_array = curr_array.trim(1)
+        (let next_exp, curr_array) = parse_additive_exp(curr_array)?
+        exp = ParserRelationalExpBinaryOP(ParserGreaterThanOrEqualTo, exp, next_exp)
+      else
+        break
+      end
+    end
+    (exp, curr_array)
+
+  fun parse_additive_exp(token_array: Array[LexerToken] val)
+    : ( ParserAdditiveExp, Array[LexerToken] val ) ?
+  =>
+    """
+    <additive-exp> ::= <term> { ("+" | "-") <term> }
+    """
+    var curr_array = token_array
+    (var exp: ParserAdditiveExp, curr_array) = parse_term(curr_array)?
     while true do
       match curr_array(0)?
       | let a: LexerAddition =>
         curr_array = curr_array.trim(1)
         (let next_term, curr_array) = parse_term(curr_array)?
-        exp = ParserExpBinaryOP(ParserAddition, exp, next_term)
+        exp = ParserAdditiveExpBinaryOP(ParserAddition, exp, next_term)
       | let a: LexerNegation =>
         curr_array = curr_array.trim(1)
         (let next_term, curr_array) = parse_term(curr_array)?
-        exp = ParserExpBinaryOP(ParserSubtraction, exp, next_term)
+        exp = ParserAdditiveExpBinaryOP(ParserSubtraction, exp, next_term)
       else
         break
       end

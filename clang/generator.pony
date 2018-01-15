@@ -24,9 +24,116 @@ primitive Generator
   fun generate_exp(exp: ParserExp): String =>
     match exp
     | let e: ParserExpBinaryOP =>
-      match e.term1
+      match e.exp1
       | let t: ParserExpBinaryOP =>
         generate_exp(t)
+      | let t: ParserLogicalAndExp =>
+        generate_logical_and_exp(t)
+      end +
+      "\tpush\t%eax\n" +
+      generate_logical_and_exp(e.exp2) +
+      "\tpop\t%ecx\n" +
+      match e.op
+      | ParserLogicalOr =>
+        "\torl\t%ecx, %eax\n" +
+        "\tmovl\t$0, %eax\n" +
+        "\tsetne\t%al\n"
+      end
+    | let e: ParserLogicalAndExp =>
+      generate_logical_and_exp(e)
+    end
+
+  fun generate_logical_and_exp(exp: ParserLogicalAndExp): String =>
+    match exp
+    | let e: ParserLogicalAndExpBinaryOP =>
+      match e.exp1
+      | let t: ParserLogicalAndExpBinaryOP =>
+        generate_logical_and_exp(t)
+      | let t: ParserEqualityExp =>
+        generate_equality_exp(t)
+      end +
+      "\tpush\t%eax\n" +
+      generate_equality_exp(e.exp2) +
+      "\tpop\t%ecx\n" +
+      match e.op
+      | ParserLogicalAnd =>
+        "\tcmpl\t$0, %ecx\n" +
+        "\tsetne\t%cl\n" +
+        "\tcmpl\t$0, %eax\n" +
+        "\tmovl\t$0, %eax\n" +
+        "\tsetne\t%al\n" +
+        "\tandb\t%cl, %al\n"
+      end
+    | let e: ParserEqualityExp =>
+      generate_equality_exp(e)
+    end
+
+  fun generate_equality_exp(exp: ParserEqualityExp): String =>
+    match exp
+    | let e: ParserEqualityExpBinaryOP =>
+      match e.exp1
+      | let t: ParserEqualityExpBinaryOP =>
+        generate_equality_exp(t)
+      | let t: ParserRelationalExp =>
+        generate_relational_exp(t)
+      end +
+      "\tpush\t%eax\n" +
+      generate_relational_exp(e.exp2) +
+      "\tpop\t%ecx\n" +
+      match e.op
+      | ParserEqualTo =>
+        "\tcmpl\t%eax, %ecx\n" +
+        "\tmovl\t$0, %eax\n" +
+        "\tsete\t%al\n"
+      | ParserNotEqualTo =>
+        "\tcmpl\t%eax, %ecx\n" +
+        "\tmovl\t$0, %eax\n" +
+        "\tsetne\t%al\n"
+      end
+    | let e: ParserRelationalExp =>
+      generate_relational_exp(e)
+    end
+
+  fun generate_relational_exp(exp: ParserRelationalExp): String =>
+    match exp
+    | let e: ParserRelationalExpBinaryOP =>
+      match e.exp1
+      | let t: ParserRelationalExpBinaryOP =>
+        generate_relational_exp(t)
+      | let t: ParserAdditiveExp =>
+        generate_additive_exp(t)
+      end +
+      "\tpush\t%eax\n" +
+      generate_additive_exp(e.exp2) +
+      "\tpop\t%ecx\n" +
+      match e.op
+      | ParserLessThan =>
+        "\tcmpl\t%eax, %ecx\n" +
+        "\tmovl\t$0, %eax\n" +
+        "\tsetl\t%al\n"
+      | ParserLessThanOrEqualTo =>
+        "\tcmpl\t%eax, %ecx\n" +
+        "\tmovl\t$0, %eax\n" +
+        "\tsetle\t%al\n"
+      | ParserGreaterThan =>
+        "\tcmpl\t%eax, %ecx\n" +
+        "\tmovl\t$0, %eax\n" +
+        "\tsetg\t%al\n"
+      | ParserGreaterThanOrEqualTo =>
+        "\tcmpl\t%eax, %ecx\n" +
+        "\tmovl\t$0, %eax\n" +
+        "\tsetge\t%al\n"
+      end
+    | let e: ParserAdditiveExp =>
+      generate_additive_exp(e)
+    end
+
+  fun generate_additive_exp(exp: ParserAdditiveExp): String =>
+    match exp
+    | let e: ParserAdditiveExpBinaryOP =>
+      match e.term1
+      | let t: ParserAdditiveExpBinaryOP =>
+        generate_additive_exp(t)
       | let t: ParserTerm =>
         generate_term(t)
       end +
