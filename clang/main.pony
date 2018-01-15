@@ -107,6 +107,7 @@ actor Main
     try
       let auth: AmbientAuth = env.root as AmbientAuth
       let new_filepath = FilePath(auth, new_filepath_string)?
+      new_filepath.remove()
       with new_file = CreateFile(new_filepath) as File do
         if not(new_file.write(assembly_code)) then error end
       end
