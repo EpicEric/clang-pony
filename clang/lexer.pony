@@ -35,6 +35,24 @@ type LexerUnaryOP is
   | LexerBitwiseComplement
   | LexerLogicalNegation )
 
+primitive LexerAddition
+  fun string(): String =>
+    "ADDITION"
+
+primitive LexerMultiplication
+  fun string(): String =>
+    "MULTIPLICATION"
+
+primitive LexerDivision
+  fun string(): String =>
+    "DIVISION"
+
+type LexerBinaryOP is
+  ( LexerAddition
+  | LexerNegation
+  | LexerMultiplication
+  | LexerDivision )
+
 primitive LexerReturnKeyword
   fun string(): String =>
     "RETURN_KEYWORD"
@@ -70,6 +88,7 @@ type LexerToken is
   | LexerCloseParenthesis
   | LexerSemicolon
   | LexerUnaryOP
+  | LexerBinaryOP
   | LexerKeyword
   | LexerIdentifier
   | LexerIntegerLiteral )
@@ -131,6 +150,18 @@ primitive Lexer
           let token = finalise_token(current_token_value = recover String end)?
           try token_array.push(token as LexerToken) end
           token_array.push(LexerLogicalNegation)
+        | '+' =>
+          let token = finalise_token(current_token_value = recover String end)?
+          try token_array.push(token as LexerToken) end
+          token_array.push(LexerAddition)
+        | '*' =>
+          let token = finalise_token(current_token_value = recover String end)?
+          try token_array.push(token as LexerToken) end
+          token_array.push(LexerMultiplication)
+        | '/' =>
+          let token = finalise_token(current_token_value = recover String end)?
+          try token_array.push(token as LexerToken) end
+          token_array.push(LexerDivision)
         else
           current_token_value.push(char)
         end
