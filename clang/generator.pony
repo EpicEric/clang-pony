@@ -49,11 +49,11 @@ primitive Generator
       match e.exp1
       | let t: ParserLogicalAndExpBinaryOP =>
         generate_logical_and_exp(t)
-      | let t: ParserEqualityExp =>
-        generate_equality_exp(t)
+      | let t: ParserBitwiseOrExp =>
+        generate_bitwise_or_exp(t)
       end +
       "\tpush\t%eax\n" +
-      generate_equality_exp(e.exp2) +
+      generate_bitwise_or_exp(e.exp2) +
       "\tpop\t%ecx\n" +
       match e.op
       | ParserLogicalAnd =>
@@ -63,6 +63,66 @@ primitive Generator
         "\tmovl\t$0, %eax\n" +
         "\tsetne\t%al\n" +
         "\tandb\t%cl, %al\n"
+      end
+    | let e: ParserBitwiseOrExp =>
+      generate_bitwise_or_exp(e)
+    end
+
+  fun generate_bitwise_or_exp(exp: ParserBitwiseOrExp): String =>
+    match exp
+    | let e: ParserBitwiseOrExpBinaryOP =>
+      match e.exp1
+      | let t: ParserBitwiseOrExpBinaryOP =>
+        generate_bitwise_or_exp(t)
+      | let t: ParserBitwiseXorExp =>
+        generate_bitwise_xor_exp(t)
+      end +
+      "\tpush\t%eax\n" +
+      generate_bitwise_xor_exp(e.exp2) +
+      "\tpop\t%ecx\n" +
+      match e.op
+      | ParserBitwiseOr =>
+        "\torl\t%ecx, %eax\n"
+      end
+    | let e: ParserBitwiseXorExp =>
+      generate_bitwise_xor_exp(e)
+    end
+
+  fun generate_bitwise_xor_exp(exp: ParserBitwiseXorExp): String =>
+    match exp
+    | let e: ParserBitwiseXorExpBinaryOP =>
+      match e.exp1
+      | let t: ParserBitwiseXorExpBinaryOP =>
+        generate_bitwise_xor_exp(t)
+      | let t: ParserBitwiseAndExp =>
+        generate_bitwise_and_exp(t)
+      end +
+      "\tpush\t%eax\n" +
+      generate_bitwise_and_exp(e.exp2) +
+      "\tpop\t%ecx\n" +
+      match e.op
+      | ParserBitwiseXor =>
+        "\txorl\t%ecx, %eax\n"
+      end
+    | let e: ParserBitwiseAndExp =>
+      generate_bitwise_and_exp(e)
+    end
+
+  fun generate_bitwise_and_exp(exp: ParserBitwiseAndExp): String =>
+    match exp
+    | let e: ParserBitwiseAndExpBinaryOP =>
+      match e.exp1
+      | let t: ParserBitwiseAndExpBinaryOP =>
+        generate_bitwise_and_exp(t)
+      | let t: ParserEqualityExp =>
+        generate_equality_exp(t)
+      end +
+      "\tpush\t%eax\n" +
+      generate_equality_exp(e.exp2) +
+      "\tpop\t%ecx\n" +
+      match e.op
+      | ParserBitwiseAnd =>
+        "\tandl\t%ecx, %eax\n"
       end
     | let e: ParserEqualityExp =>
       generate_equality_exp(e)
@@ -100,11 +160,11 @@ primitive Generator
       match e.exp1
       | let t: ParserRelationalExpBinaryOP =>
         generate_relational_exp(t)
-      | let t: ParserAdditiveExp =>
-        generate_additive_exp(t)
+      | let t: ParserBitwiseShiftExp =>
+        generate_bitwise_shift_exp(t)
       end +
       "\tpush\t%eax\n" +
-      generate_additive_exp(e.exp2) +
+      generate_bitwise_shift_exp(e.exp2) +
       "\tpop\t%ecx\n" +
       match e.op
       | ParserLessThan =>
@@ -123,6 +183,30 @@ primitive Generator
         "\tcmpl\t%eax, %ecx\n" +
         "\tmovl\t$0, %eax\n" +
         "\tsetge\t%al\n"
+      end
+    | let e: ParserBitwiseShiftExp =>
+      generate_bitwise_shift_exp(e)
+    end
+
+  fun generate_bitwise_shift_exp(exp: ParserBitwiseShiftExp): String =>
+        match exp
+    | let e: ParserBitwiseShiftExpBinaryOP =>
+      match e.exp1
+      | let t: ParserBitwiseShiftExpBinaryOP =>
+        generate_relational_exp(t)
+      | let t: ParserAdditiveExp =>
+        generate_additive_exp(t)
+      end +
+      "\tpush\t%eax\n" +
+      generate_additive_exp(e.exp2) +
+      "\tpop\t%ecx\n" +
+      match e.op
+      | ParserBitwiseShiftLeft =>
+        "\txchg\t%ecx, %eax\n" +
+        "\tshll\t%cl, %eax\n"
+      | ParserBitwiseShiftRight =>
+        "\txchg\t%ecx, %eax\n" +
+        "\tshrl\t%cl, %eax\n"
       end
     | let e: ParserAdditiveExp =>
       generate_additive_exp(e)
@@ -170,6 +254,11 @@ primitive Generator
         "\txchg\t%ecx, %eax\n" +
         "\tmovl\t$0, %edx\n" +
         "\tidivl\t%ecx\n"
+      | ParserModulo =>
+        "\txchg\t%ecx, %eax\n" +
+        "\tmovl\t$0, %edx\n" +
+        "\tidivl\t%ecx\n" +
+        "\txchg\t%edx, %eax\n"
       end
     | let t: ParserFactor =>
       generate_factor(t)

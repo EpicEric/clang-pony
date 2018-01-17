@@ -79,6 +79,30 @@ primitive LexerGreaterThanOrEqualTo
   fun string(): String =>
     "GREATER_THAN_OR_EQUAL_TO"
 
+primitive LexerModulo
+  fun string(): String =>
+    "MODULO"
+
+primitive LexerBitwiseAnd
+  fun string(): String =>
+    "BITWISE_AND"
+
+primitive LexerBitwiseOr
+  fun string(): String =>
+    "BITWISE_OR"
+
+primitive LexerBitwiseXor
+  fun string(): String =>
+    "BITWISE_XOR"
+
+primitive LexerBitwiseShiftLeft
+  fun string(): String =>
+    "BITWISE_SHIFT_LEFT"
+
+primitive LexerBitwiseShiftRight
+  fun string(): String =>
+    "BITWISE_SHIFT_RIGHT"
+
 type LexerBinaryOP is
   ( LexerAddition
   | LexerNegation
@@ -91,7 +115,13 @@ type LexerBinaryOP is
   | LexerLessThan
   | LexerLessThanOrEqualTo
   | LexerGreaterThan
-  | LexerGreaterThanOrEqualTo )
+  | LexerGreaterThanOrEqualTo
+  | LexerModulo
+  | LexerBitwiseAnd
+  | LexerBitwiseOr
+  | LexerBitwiseXor
+  | LexerBitwiseShiftLeft
+  | LexerBitwiseShiftRight )
 
 primitive LexerReturnKeyword
   fun string(): String =>
@@ -222,17 +252,25 @@ primitive Lexer
           end
           current_token_value.push(char)
         | '<' =>
-          if current_token_value != "" then
+          if (current_token_value != "") and (current_token_value != "<") then
             let token = finalise_token(current_token_value = recover String end)?
             try token_array.push(token as LexerToken) end
           end
           current_token_value.push(char)
         | '>' =>
-          if current_token_value != "" then
+          if (current_token_value != "") and (current_token_value != ">") then
             let token = finalise_token(current_token_value = recover String end)?
             try token_array.push(token as LexerToken) end
           end
           current_token_value.push(char)
+        | '%' =>
+          let token = finalise_token(current_token_value = recover String end)?
+          try token_array.push(token as LexerToken) end
+          token_array.push(LexerModulo)
+        | '^' =>
+          let token = finalise_token(current_token_value = recover String end)?
+          try token_array.push(token as LexerToken) end
+          token_array.push(LexerBitwiseXor)
         else
           if current_token_value == "!" then
             let token = finalise_token(current_token_value = recover String end)?
@@ -271,6 +309,14 @@ primitive Lexer
         return LexerGreaterThan
       | ">=" =>
         return LexerGreaterThanOrEqualTo
+      | "&" =>
+        return LexerBitwiseAnd
+      | "|" =>
+        return LexerBitwiseOr
+      | "<<" =>
+        return LexerBitwiseShiftLeft
+      | ">>" =>
+        return LexerBitwiseShiftRight
       else
         let first_char: U8 = current_token_value(0)?
         let alphabet_char: Bool =

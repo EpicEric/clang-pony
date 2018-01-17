@@ -52,12 +52,12 @@ type ParserLogicalAndExpBinaryOperator is
 class val ParserLogicalAndExpBinaryOP
   let op: ParserLogicalAndExpBinaryOperator
   let exp1: ParserLogicalAndExp
-  let exp2: ParserEqualityExp
+  let exp2: ParserBitwiseOrExp
 
   new val create(
     op': ParserLogicalAndExpBinaryOperator,
     exp1': ParserLogicalAndExp,
-    exp2': ParserEqualityExp)
+    exp2': ParserBitwiseOrExp)
   =>
     op = op'
     exp1 = exp1'
@@ -65,6 +65,75 @@ class val ParserLogicalAndExpBinaryOP
 
 type ParserLogicalAndExp is
   ( ParserLogicalAndExpBinaryOP
+  | ParserBitwiseOrExp )
+
+primitive ParserBitwiseOr
+
+type ParserBitwiseOrExpBinaryOperator is
+  ( ParserBitwiseOr )
+
+class val ParserBitwiseOrExpBinaryOP
+  let op: ParserBitwiseOrExpBinaryOperator
+  let exp1: ParserBitwiseOrExp
+  let exp2: ParserBitwiseXorExp
+
+  new val create(
+    op': ParserBitwiseOrExpBinaryOperator,
+    exp1': ParserBitwiseOrExp,
+    exp2': ParserBitwiseXorExp)
+  =>
+    op = op'
+    exp1 = exp1'
+    exp2 = exp2'
+
+type ParserBitwiseOrExp is
+  ( ParserBitwiseOrExpBinaryOP
+  | ParserBitwiseXorExp )
+
+primitive ParserBitwiseXor
+
+type ParserBitwiseXorExpBinaryOperator is
+  ( ParserBitwiseXor )
+
+class val ParserBitwiseXorExpBinaryOP
+  let op: ParserBitwiseXorExpBinaryOperator
+  let exp1: ParserBitwiseXorExp
+  let exp2: ParserBitwiseAndExp
+
+  new val create(
+    op': ParserBitwiseXorExpBinaryOperator,
+    exp1': ParserBitwiseXorExp,
+    exp2': ParserBitwiseAndExp)
+  =>
+    op = op'
+    exp1 = exp1'
+    exp2 = exp2'
+
+type ParserBitwiseXorExp is
+  ( ParserBitwiseXorExpBinaryOP
+  | ParserBitwiseAndExp )
+
+primitive ParserBitwiseAnd
+
+type ParserBitwiseAndExpBinaryOperator is
+  ( ParserBitwiseAnd )
+
+class val ParserBitwiseAndExpBinaryOP
+  let op: ParserBitwiseAndExpBinaryOperator
+  let exp1: ParserBitwiseAndExp
+  let exp2: ParserEqualityExp
+
+  new val create(
+    op': ParserBitwiseAndExpBinaryOperator,
+    exp1': ParserBitwiseAndExp,
+    exp2': ParserEqualityExp)
+  =>
+    op = op'
+    exp1 = exp1'
+    exp2 = exp2'
+
+type ParserBitwiseAndExp is
+  ( ParserBitwiseAndExpBinaryOP
   | ParserEqualityExp )
 
 primitive ParserEqualTo
@@ -106,12 +175,12 @@ type ParserRelationalExpBinaryOperator is
 class val ParserRelationalExpBinaryOP
   let op: ParserRelationalExpBinaryOperator
   let exp1: ParserRelationalExp
-  let exp2: ParserAdditiveExp
+  let exp2: ParserBitwiseShiftExp
 
   new val create(
     op': ParserRelationalExpBinaryOperator,
     exp1': ParserRelationalExp,
-    exp2': ParserAdditiveExp)
+    exp2': ParserBitwiseShiftExp)
   =>
     op = op'
     exp1 = exp1'
@@ -119,6 +188,31 @@ class val ParserRelationalExpBinaryOP
 
 type ParserRelationalExp is
   ( ParserRelationalExpBinaryOP
+  | ParserBitwiseShiftExp )
+
+primitive ParserBitwiseShiftLeft
+primitive ParserBitwiseShiftRight
+
+type ParserBitwiseShiftExpBinaryOperator is
+  ( ParserBitwiseShiftLeft
+  | ParserBitwiseShiftRight )
+
+class val ParserBitwiseShiftExpBinaryOP
+  let op: ParserBitwiseShiftExpBinaryOperator
+  let exp1: ParserBitwiseShiftExp
+  let exp2: ParserAdditiveExp
+
+  new val create(
+    op': ParserBitwiseShiftExpBinaryOperator,
+    exp1': ParserBitwiseShiftExp,
+    exp2': ParserAdditiveExp)
+  =>
+    op = op'
+    exp1 = exp1'
+    exp2 = exp2'
+
+type ParserBitwiseShiftExp is
+  ( ParserBitwiseShiftExpBinaryOP
   | ParserAdditiveExp )
 
 primitive ParserAddition
@@ -148,10 +242,12 @@ type ParserAdditiveExp is
 
 primitive ParserMultiplication
 primitive ParserDivision
+primitive ParserModulo
 
 type ParserTermBinaryOperator is
   ( ParserMultiplication
-  | ParserDivision )
+  | ParserDivision
+  | ParserModulo )
 
 class val ParserTermBinaryOP
   let op: ParserTermBinaryOperator
@@ -174,8 +270,12 @@ type ParserTerm is
 type ParserBinaryOperator is
   ( ParserExpBinaryOperator
   | ParserLogicalAndExpBinaryOperator
+  | ParserBitwiseOrExpBinaryOperator
+  | ParserBitwiseXorExpBinaryOperator
+  | ParserBitwiseAndExpBinaryOperator
   | ParserEqualityExpBinaryOperator
   | ParserRelationalExpBinaryOperator
+  | ParserBitwiseShiftExpBinaryOperator
   | ParserAdditiveExpBinaryOperator
   | ParserTermBinaryOperator )
 
@@ -225,8 +325,12 @@ type ParserRule is
   | ParserStatement
   | ParserExp
   | ParserLogicalAndExp
+  | ParserBitwiseOr
+  | ParserBitwiseXor
+  | ParserBitwiseAnd
   | ParserEqualityExp
   | ParserRelationalExp
+  | ParserBitwiseShiftExp
   | ParserAdditiveExp
   | ParserTerm
   | ParserFactor
@@ -264,6 +368,21 @@ primitive Parser
       print_ast(r.op, level + 1) +
       print_ast(r.exp1, level + 1) +
       print_ast(r.exp2, level + 1)
+    | let r: ParserBitwiseOrExpBinaryOP =>
+      print_level(level) + "BITWISE_OR_EXP_BINARY_OP\n" +
+      print_ast(r.op, level + 1) +
+      print_ast(r.exp1, level + 1) +
+      print_ast(r.exp2, level + 1)
+    | let r: ParserBitwiseXorExpBinaryOP =>
+      print_level(level) + "BITWISE_XOR_EXP_BINARY_OP\n" +
+      print_ast(r.op, level + 1) +
+      print_ast(r.exp1, level + 1) +
+      print_ast(r.exp2, level + 1)
+    | let r: ParserBitwiseAndExpBinaryOP =>
+      print_level(level) + "BITWISE_AND_EXP_BINARY_OP\n" +
+      print_ast(r.op, level + 1) +
+      print_ast(r.exp1, level + 1) +
+      print_ast(r.exp2, level + 1)
     | let r: ParserEqualityExpBinaryOP =>
       print_level(level) + "EQUALITY_EXP_BINARY_OP\n" +
       print_ast(r.op, level + 1) +
@@ -271,6 +390,11 @@ primitive Parser
       print_ast(r.exp2, level + 1)
     | let r: ParserRelationalExpBinaryOP =>
       print_level(level) + "RELATIONAL_EXP_BINARY_OP\n" +
+      print_ast(r.op, level + 1) +
+      print_ast(r.exp1, level + 1) +
+      print_ast(r.exp2, level + 1)
+    | let r: ParserBitwiseShiftExpBinaryOP =>
+      print_level(level) + "BITWISE_SHIFT_EXP_BINARY_OP\n" +
       print_ast(r.op, level + 1) +
       print_ast(r.exp1, level + 1) +
       print_ast(r.exp2, level + 1)
@@ -303,6 +427,18 @@ primitive Parser
       print_level(level) + "GREATER_THAN\n"
     | let r: ParserGreaterThanOrEqualTo =>
       print_level(level) + "GREATER_THAN_OR_EQUAL_TO\n"
+    | let r: ParserModulo =>
+      print_level(level) + "MODULO\n"
+    | let r: ParserBitwiseAnd =>
+      print_level(level) + "BITWISE_AND\n"
+    | let r: ParserBitwiseXor =>
+      print_level(level) + "BITWISE_XOR\n"
+    | let r: ParserBitwiseOr=>
+      print_level(level) + "BITWISE_OR\n"
+    | let r: ParserBitwiseShiftLeft =>
+      print_level(level) + "BITWISE_SHIFT_LEFT\n"
+    | let r: ParserBitwiseShiftRight =>
+      print_level(level) + "BITWISE_SHIFT_RIGHT\n"
     | let r: ParserTermBinaryOP =>
       print_level(level) + "TERM_BINARY_OP\n" +
       print_ast(r.op, level + 1) +
@@ -429,16 +565,76 @@ primitive Parser
     : ( ParserLogicalAndExp, Array[LexerToken] val ) ?
   =>
     """
-    <logical-and-exp> ::= <equality-exp> { "&&" <equality-exp> }
+    <logical-and-exp> ::= <bitwise-or-exp> { "&&" <bitwise-or-exp> }
     """
     var curr_array = token_array
-    (var exp: ParserLogicalAndExp, curr_array) = parse_equality_exp(curr_array)?
+    (var exp: ParserLogicalAndExp, curr_array) = parse_bitwise_or_exp(curr_array)?
     while true do
       match curr_array(0)?
       | let a: LexerLogicalAnd =>
         curr_array = curr_array.trim(1)
-        (let next_exp, curr_array) = parse_equality_exp(curr_array)?
+        (let next_exp, curr_array) = parse_bitwise_or_exp(curr_array)?
         exp = ParserLogicalAndExpBinaryOP(ParserLogicalAnd, exp, next_exp)
+      else
+        break
+      end
+    end
+    (exp, curr_array)
+
+  fun parse_bitwise_or_exp(token_array: Array[LexerToken] val)
+    : ( ParserBitwiseOrExp, Array[LexerToken] val ) ?
+  =>
+    """
+    <bitwise-or-exp> ::= <bitwise-xor-exp> { "|" <bitwise-xor-exp> }
+    """
+    var curr_array = token_array
+    (var exp: ParserBitwiseOrExp, curr_array) = parse_bitwise_xor_exp(curr_array)?
+    while true do
+      match curr_array(0)?
+      | let a: LexerBitwiseOr =>
+        curr_array = curr_array.trim(1)
+        (let next_exp, curr_array) = parse_bitwise_xor_exp(curr_array)?
+        exp = ParserBitwiseOrExpBinaryOP(ParserBitwiseOr, exp, next_exp)
+      else
+        break
+      end
+    end
+    (exp, curr_array)
+
+  fun parse_bitwise_xor_exp(token_array: Array[LexerToken] val)
+    : ( ParserBitwiseXorExp, Array[LexerToken] val ) ?
+  =>
+    """
+    <bitwise-xor-exp> ::= <bitwise-and-exp> { "^" <bitwise-and-exp> }
+    """
+    var curr_array = token_array
+    (var exp: ParserBitwiseXorExp, curr_array) = parse_bitwise_and_exp(curr_array)?
+    while true do
+      match curr_array(0)?
+      | let a: LexerBitwiseXor =>
+        curr_array = curr_array.trim(1)
+        (let next_exp, curr_array) = parse_bitwise_and_exp(curr_array)?
+        exp = ParserBitwiseXorExpBinaryOP(ParserBitwiseXor, exp, next_exp)
+      else
+        break
+      end
+    end
+    (exp, curr_array)
+
+  fun parse_bitwise_and_exp(token_array: Array[LexerToken] val)
+    : ( ParserBitwiseAndExp, Array[LexerToken] val ) ?
+  =>
+    """
+    <bitwise-and-exp> ::= <equality-exp> { "&" <equality-exp> }
+    """
+    var curr_array = token_array
+    (var exp: ParserBitwiseAndExp, curr_array) = parse_equality_exp(curr_array)?
+    while true do
+      match curr_array(0)?
+      | let a: LexerBitwiseAnd =>
+        curr_array = curr_array.trim(1)
+        (let next_exp, curr_array) = parse_equality_exp(curr_array)?
+        exp = ParserBitwiseAndExpBinaryOP(ParserBitwiseAnd, exp, next_exp)
       else
         break
       end
@@ -473,28 +669,52 @@ primitive Parser
     : ( ParserRelationalExp, Array[LexerToken] val ) ?
   =>
     """
-    <relational-exp> ::= <additive-exp> { ("<" | ">" | "<=" | ">=") <additive-exp> }
+    <relational-exp> ::= <shift-exp> { ("<" | ">" | "<=" | ">=") <shift-exp> }
     """
     var curr_array = token_array
-    (var exp: ParserRelationalExp, curr_array) = parse_additive_exp(curr_array)?
+    (var exp: ParserRelationalExp, curr_array) = parse_bitwise_shift_exp(curr_array)?
     while true do
       match curr_array(0)?
       | let a: LexerLessThan =>
         curr_array = curr_array.trim(1)
-        (let next_exp, curr_array) = parse_additive_exp(curr_array)?
+        (let next_exp, curr_array) = parse_bitwise_shift_exp(curr_array)?
         exp = ParserRelationalExpBinaryOP(ParserLessThan, exp, next_exp)
       | let a: LexerLessThanOrEqualTo =>
         curr_array = curr_array.trim(1)
-        (let next_exp, curr_array) = parse_additive_exp(curr_array)?
+        (let next_exp, curr_array) = parse_bitwise_shift_exp(curr_array)?
         exp = ParserRelationalExpBinaryOP(ParserLessThanOrEqualTo, exp, next_exp)
       | let a: LexerGreaterThan =>
         curr_array = curr_array.trim(1)
-        (let next_exp, curr_array) = parse_additive_exp(curr_array)?
+        (let next_exp, curr_array) = parse_bitwise_shift_exp(curr_array)?
         exp = ParserRelationalExpBinaryOP(ParserGreaterThan, exp, next_exp)
       | let a: LexerGreaterThanOrEqualTo =>
         curr_array = curr_array.trim(1)
-        (let next_exp, curr_array) = parse_additive_exp(curr_array)?
+        (let next_exp, curr_array) = parse_bitwise_shift_exp(curr_array)?
         exp = ParserRelationalExpBinaryOP(ParserGreaterThanOrEqualTo, exp, next_exp)
+      else
+        break
+      end
+    end
+    (exp, curr_array)
+
+  fun parse_bitwise_shift_exp(token_array: Array[LexerToken] val)
+    : ( ParserBitwiseShiftExp, Array[LexerToken] val ) ?
+  =>
+    """
+    <shift-exp> ::= <additive-exp> { ("<<" | ">>") <additive-exp> }
+    """
+    var curr_array = token_array
+    (var exp: ParserBitwiseShiftExp, curr_array) = parse_additive_exp(curr_array)?
+    while true do
+      match curr_array(0)?
+      | let a: LexerBitwiseShiftLeft =>
+        curr_array = curr_array.trim(1)
+        (let next_exp, curr_array) = parse_additive_exp(curr_array)?
+        exp = ParserBitwiseShiftExpBinaryOP(ParserBitwiseShiftLeft, exp, next_exp)
+      | let a: LexerBitwiseShiftRight =>
+        curr_array = curr_array.trim(1)
+        (let next_exp, curr_array) = parse_additive_exp(curr_array)?
+        exp = ParserBitwiseShiftExpBinaryOP(ParserBitwiseShiftRight, exp, next_exp)
       else
         break
       end
@@ -529,7 +749,7 @@ primitive Parser
     : ( ParserTerm, Array[LexerToken] val ) ?
   =>
     """
-    <term> ::= <factor> { ("*" | "/") <factor> }
+    <term> ::= <factor> { ("*" | "/" | "%") <factor> }
     """
     var curr_array = token_array
     (var term: ParserTerm, curr_array) = parse_factor(curr_array)?
@@ -543,6 +763,10 @@ primitive Parser
         curr_array = curr_array.trim(1)
         (let next_factor, curr_array) = parse_factor(curr_array)?
         term = ParserTermBinaryOP(ParserDivision, term, next_factor)
+      | let a: LexerModulo =>
+        curr_array = curr_array.trim(1)
+        (let next_factor, curr_array) = parse_factor(curr_array)?
+        term = ParserTermBinaryOP(ParserModulo, term, next_factor)
       else
         break
       end
